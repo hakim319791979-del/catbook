@@ -73,9 +73,11 @@ jobs:
               id 'kotlin-android'
           }
           apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
+
           android {
               compileSdkVersion 34
               namespace "com.example.catbook"
+
               defaultConfig {
                   applicationId "com.example.catbook"
                   minSdkVersion 21
@@ -83,6 +85,7 @@ jobs:
                   versionCode 1
                   versionName "1.0"
               }
+
               buildTypes {
                   release {
                       signingConfig signingConfigs.debug
@@ -91,6 +94,7 @@ jobs:
                   }
               }
           }
+
           flutter { source '../..' }
           dependencies { implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22" }
           EOF
@@ -102,6 +106,7 @@ jobs:
           android.useAndroidX=true
           android.enableJetifier=true
           EOF
+
           cat > new_app/android/settings.gradle <<'EOF'
           pluginManagement {
             repositories { google(); mavenCentral() }
@@ -117,6 +122,7 @@ jobs:
           rootProject.name = "catbook"
           include(":app")
           EOF
+
           mkdir -p new_app/android/gradle/wrapper
           cat > new_app/android/gradle/wrapper/gradle-wrapper.properties <<'EOF'
           distributionBase=GRADLE_USER_HOME
@@ -184,14 +190,10 @@ jobs:
           ./gradlew --version
           ./gradlew assembleRelease --stacktrace --info
 
-      - name: List outputs
+      - name: Debug APK paths before upload
         run: |
-          echo "==== flutter-apk ===="
-          ls -R new_app/build/app/outputs/flutter-apk || true
-          echo "==== apk/release ===="
-          ls -R new_app/build/app/outputs/apk/release || true
-          echo "==== android module outputs ===="
-          ls -R new_app/android/app/build/outputs || true
+          echo "=== SEARCHING FOR APK FILES ==="
+          find new_app -type f -name "*.apk" || echo "No APK files found!"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
