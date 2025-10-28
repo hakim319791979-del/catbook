@@ -1,7 +1,7 @@
 name: catbook
-description: Colorful Flutter UI with bottom navigation and NFT/QR screen.
+description: Local social app for cats with offline posts and colorful UI.
 publish_to: "none"
-version: 0.3.0+3
+version: 0.4.0+4
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -14,6 +14,8 @@ dependencies:
   qr_flutter: ^4.1.0
   shared_preferences: ^2.3.2
   google_fonts: ^6.2.1
+  image_picker: ^1.1.1
+  path_provider: ^2.1.3
 
 dev_dependencies:
   flutter_test:
