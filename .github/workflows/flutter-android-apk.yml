@@ -145,11 +145,14 @@ jobs:
           flutter clean
           flutter pub get
 
-      - name: Build APK (release)
+            - name: Build APK (release, split per ABI)
         working-directory: new_app
         id: build_release
         continue-on-error: true
-        run: flutter build apk --release -v
+        run: |
+          flutter build apk --release -v \
+            --split-per-abi \
+            -Ptarget-platform=android-arm,android-arm64
 
       - name: Gradle assembleRelease fallback
         if: steps.build_release.outcome == 'failure'
@@ -157,7 +160,7 @@ jobs:
         continue-on-error: true
         run: ./gradlew assembleRelease --stacktrace --info
 
-      - name: Build APK (debug) fallback
+      - name: Build APK (debug) final fallback
         if: steps.build_release.outcome == 'failure'
         working-directory: new_app
         continue-on-error: true
@@ -177,7 +180,7 @@ jobs:
       - name: Debug artifact paths
         if: always()
         run: |
-          echo "=== SEARCHING FOR APK/AAB FILES ==="
+          echo "=== SEARCH *.apk / *.aab ==="
           find new_app -type f \( -name "*.apk" -o -name "*.aab" \) -printf "%p\n" || true
           echo "=== SHOW OUTPUT DIRS ==="
           ls -R new_app/build/app/outputs || true
@@ -190,7 +193,15 @@ jobs:
           mkdir -p new_app/dist
           find new_app -type f -name "*.apk" -exec cp -v {} new_app/dist/ \; || true
           find new_app -type f -name "*.aab" -exec cp -v {} new_app/dist/ \; || true
+          echo "=== DIST CONTENT ==="
           ls -l new_app/dist || true
+
+      - name: Fail if no artifacts
+        if: always()
+        run: |
+          test -n "$(ls -1 new_app/dist 2>/dev/null | grep -E '\.(apk|aab)$' || true)" || { 
+            echo "No APK/AAB produced. Check previous step logs."; exit 1; 
+          }
 
       - name: Upload APKs
         if: always()
@@ -198,7 +209,7 @@ jobs:
         with:
           name: catbook-apk
           path: new_app/dist/*.apk
-          if-no-files-found: warn
+          if-no-files-found: error
 
       - name: Upload AABs
         if: always()
