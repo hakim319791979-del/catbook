@@ -31,19 +31,28 @@ jobs:
       - name: Verify Flutter version
         run: flutter --version
 
-      # ✅ إنشاء مشروع Flutter جديد في مجلد مؤقت
+      # إنشاء مشروع Flutter نظيف
       - name: Create fresh Flutter project
         run: |
           rm -rf new_app
           flutter create -t app new_app
 
-      # ✅ نسخ ملفات الكود الخاصة بك (lib/ و pubspec.yaml فقط)
+      # وضع كودك و pubspec داخل المشروع الجديد
       - name: Replace Dart source
         run: |
           rm -rf new_app/lib
           mkdir -p new_app/lib
           cp -r lib/* new_app/lib/ || true
           cp pubspec.yaml new_app/ || true
+
+      # إضافة أصول افتراضية واعتمادها
+      - name: Add default assets
+        run: |
+          mkdir -p new_app/assets/images
+          curl -L https://placekitten.com/300/300 -o new_app/assets/images/cat_default.png
+          if ! grep -q "assets:" new_app/pubspec.yaml; then
+            printf "\nflutter:\n  uses-material-design: true\n  assets:\n    - assets/images/\n" >> new_app/pubspec.yaml
+          fi
 
       - name: Get dependencies
         working-directory: new_app
