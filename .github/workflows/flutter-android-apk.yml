@@ -31,13 +31,14 @@ jobs:
       - name: Verify Flutter version
         run: flutter --version
 
-      # إنشاء مشروع Flutter نظيف
+      - name: Clean project
+        run: flutter clean
+
       - name: Create fresh Flutter project
         run: |
           rm -rf new_app
           flutter create -t app new_app
 
-      # وضع كودك و pubspec داخل المشروع الجديد
       - name: Replace Dart source
         run: |
           rm -rf new_app/lib
@@ -45,7 +46,6 @@ jobs:
           cp -r lib/* new_app/lib/ || true
           cp pubspec.yaml new_app/ || true
 
-      # إضافة أصول افتراضية واعتمادها
       - name: Add default assets
         run: |
           mkdir -p new_app/assets/images
