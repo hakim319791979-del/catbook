@@ -8,7 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,12 +18,27 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Flutter
+      # 1) محاولة بإصدار مُثبّت
+      - name: Setup Flutter (pinned)
+        id: flutter_pinned
+        continue-on-error: true
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          flutter-version: '${{ env.FLUTTER_VERSION || '3.24.3' }}'
           channel: 'stable'
           cache: true
+
+      # 2) خطة بديلة إذا فشلت الخطوة السابقة
+      - name: Fallback to channel stable
+        if: steps.flutter_pinned.outcome == 'failure'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      # 3) طباعة الإصدار للتأكد
+      - name: Verify Flutter version
+        run: flutter --version
 
       - name: Flutter Pub Get
         run: flutter pub get
