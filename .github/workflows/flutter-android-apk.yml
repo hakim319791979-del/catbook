@@ -199,17 +199,18 @@ jobs:
         run: |
           echo "=== SEARCHING FOR APK FILES ==="
           find new_app -type f -name "*.apk" -printf "%p\n" || true
-          echo "=== SHOW OUTPUT DIRS ==="
-          ls -R new_app/build/app/outputs || true
-          ls -R new_app/build/app/intermediates || true
-          ls -R new_app/android/app/build/outputs || true
+
+      - name: Collect APKs to dist
+        if: always()
+        run: |
+          mkdir -p new_app/dist
+          find new_app -type f -name "*.apk" -exec cp -v {} new_app/dist/ \; || true
+          ls -l new_app/dist || true
 
       - name: Upload APK
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: catbook-apk
-          path: |
-            new_app/**/outputs/**/*.apk
-            new_app/**/intermediates/**/*.apk
-          if-no-files-found: warn
+          path: new_app/dist/*.apk
+          if-no-files-found: error
