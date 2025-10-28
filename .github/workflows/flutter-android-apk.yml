@@ -23,7 +23,6 @@ jobs:
           java-version: '17'
 
       - name: Setup Flutter
-        id: flutter_setup
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -33,27 +32,27 @@ jobs:
       - name: Verify Flutter version
         run: flutter --version
 
+      # إنشاء مشروع Flutter أساسي في حال لم يكن موجودًا
+      - name: Create Flutter project if missing
+        run: |
+          if [ ! -f "pubspec.yaml" ]; then
+            flutter create -t app .
+          fi
+
       - name: Flutter Pub Get
         run: flutter pub get
 
       - name: Analyze
         run: flutter analyze
 
-      # بناء APK إصدار نهائي
       - name: Build APK (release)
         run: flutter build apk --release
 
-      # فحص جميع المجلدات لاكتشاف المسار الفعلي
-      - name: List outputs
-        run: |
-          echo "== List build output files =="
-          find build -type f -name "*.apk" -maxdepth 10
+      - name: List APKs
+        run: find build -type f -name "*.apk" -maxdepth 10
 
-      # رفع أي ملف APK أينما كان داخل build/
-      - name: Upload APK Artifacts
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-apk-files
-          path: |
-            build/**/*.apk
-          if-no-files-found: error
+          name: app-release
+          path: build/**/*.apk
