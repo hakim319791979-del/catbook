@@ -1,0 +1,16 @@
+# CatGram (Flutter)
+
+Minimal Flutter skeleton for a cats social app. Builds APK via GitHub Actions.
+
+## Build from iPhone
+1. Open GitHub in Safari → create repo → add these files with the same paths.
+2. Commit to `main`. Actions will auto-start.
+3. Go to **Actions** → latest run → **Artifacts** → download `app-release-apk`.
+
+## Run locally (optional)
+Requires desktop. Not needed if you only want the APK from Actions.
+
+## Roadmap
+- Replace InMemoryBackend with Firebase or Supabase.
+- Add media upload and auth.
+- Add NFT badge per cat (contract + mint flow).
