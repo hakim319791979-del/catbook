@@ -102,6 +102,31 @@ jobs:
           }
           EOF
 
+      - name: Patch Gradle core files
+        run: |
+          cat > new_app/android/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx2g -XX:+UseParallelGC
+          android.useAndroidX=true
+          android.enableJetifier=true
+          EOF
+
+          cat > new_app/android/settings.gradle <<'EOF'
+          rootProject.name = "catbook"
+          include(":app")
+          EOF
+
+          mkdir -p new_app/android/gradle/wrapper
+          cat > new_app/android/gradle/wrapper/gradle-wrapper.properties <<'EOF'
+          distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip
+          EOF
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x new_app/android/gradlew
+
       - name: Add image assets
         run: |
           mkdir -p new_app/assets/images
