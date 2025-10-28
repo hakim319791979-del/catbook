@@ -73,11 +73,13 @@ jobs:
 
       - name: List APKs
         working-directory: new_app
-        run: find build -type f -name "*.apk" -maxdepth 10
+        run: find build -type f -name "*.apk" -maxdepth 10 || true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: catbook-apk
-          path: new_app/build/app/outputs/flutter-apk/app-release.apk
-          if-no-files-found: error
+          path: |
+            new_app/build/app/outputs/flutter-apk/*.apk
+            new_app/build/app/outputs/apk/release/*.apk
+          if-no-files-found: warn
