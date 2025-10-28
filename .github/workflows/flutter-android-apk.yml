@@ -31,7 +31,9 @@ jobs:
           cache: true
 
       - name: Verify Flutter version
-        run: flutter --version
+        run: |
+          flutter --version
+          flutter doctor -v
 
       - name: Create fresh Flutter project
         run: |
@@ -62,20 +64,18 @@ jobs:
                   localProperties.load(reader)
               }
           }
-
           def flutterRoot = localProperties.getProperty('flutter.sdk')
           if (flutterRoot == null) {
               throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
           }
-
-          apply plugin: 'com.android.application'
-          apply plugin: 'kotlin-android'
+          plugins {
+              id 'com.android.application'
+              id 'kotlin-android'
+          }
           apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
-
           android {
               compileSdkVersion 34
               namespace "com.example.catbook"
-
               defaultConfig {
                   applicationId "com.example.catbook"
                   minSdkVersion 21
@@ -83,7 +83,6 @@ jobs:
                   versionCode 1
                   versionName "1.0"
               }
-
               buildTypes {
                   release {
                       signingConfig signingConfigs.debug
@@ -92,14 +91,8 @@ jobs:
                   }
               }
           }
-
-          flutter {
-              source '../..'
-          }
-
-          dependencies {
-              implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22"
-          }
+          flutter { source '../..' }
+          dependencies { implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22" }
           EOF
 
       - name: Patch Gradle core files
@@ -109,12 +102,21 @@ jobs:
           android.useAndroidX=true
           android.enableJetifier=true
           EOF
-
           cat > new_app/android/settings.gradle <<'EOF'
+          pluginManagement {
+            repositories { google(); mavenCentral() }
+            plugins {
+              id("com.android.application") version "8.3.0"
+              id("org.jetbrains.kotlin.android") version "1.9.22"
+            }
+          }
+          dependencyResolutionManagement {
+            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+            repositories { google(); mavenCentral() }
+          }
           rootProject.name = "catbook"
           include(":app")
           EOF
-
           mkdir -p new_app/android/gradle/wrapper
           cat > new_app/android/gradle/wrapper/gradle-wrapper.properties <<'EOF'
           distributionBase=GRADLE_USER_HOME
@@ -128,27 +130,15 @@ jobs:
         run: |
           cat > new_app/android/build.gradle <<'EOF'
           buildscript {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-              dependencies {
-                  classpath 'com.android.tools.build:gradle:8.3.0'
-                  classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22'
-              }
+            repositories { google(); mavenCentral() }
+            dependencies {
+              classpath 'com.android.tools.build:gradle:8.3.0'
+              classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22'
+            }
           }
-
-          allprojects {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-
+          allprojects { repositories { google(); mavenCentral() } }
           rootProject.buildDir = '../build'
-          subprojects {
-              project.buildDir = "${rootProject.buildDir}/${project.name}"
-          }
+          subprojects { project.buildDir = "${rootProject.buildDir}/${project.name}" }
           EOF
 
       - name: Ensure Gradle wrapper is executable
@@ -178,16 +168,30 @@ jobs:
         working-directory: new_app
         id: build_release
         continue-on-error: true
-        run: flutter build apk --release
+        run: flutter build apk --release -v
 
       - name: Build APK (debug fallback)
         if: steps.build_release.outcome == 'failure'
         working-directory: new_app
-        run: flutter build apk --debug
+        continue-on-error: true
+        run: flutter build apk --debug -v
 
-      - name: List APKs
-        working-directory: new_app
-        run: find build -type f -name "*.apk" -maxdepth 10 || true
+      - name: Gradle assemble fallback
+        if: steps.build_release.outcome == 'failure'
+        working-directory: new_app/android
+        continue-on-error: true
+        run: |
+          ./gradlew --version
+          ./gradlew assembleRelease --stacktrace --info
+
+      - name: List outputs
+        run: |
+          echo "==== flutter-apk ===="
+          ls -R new_app/build/app/outputs/flutter-apk || true
+          echo "==== apk/release ===="
+          ls -R new_app/build/app/outputs/apk/release || true
+          echo "==== android module outputs ===="
+          ls -R new_app/android/app/build/outputs || true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -196,4 +200,6 @@ jobs:
           path: |
             new_app/build/app/outputs/flutter-apk/*.apk
             new_app/build/app/outputs/apk/release/*.apk
+            new_app/android/app/build/outputs/apk/release/*.apk
+            new_app/android/app/build/outputs/flutter-apk/*.apk
           if-no-files-found: warn
