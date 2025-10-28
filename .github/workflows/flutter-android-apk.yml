@@ -29,12 +29,14 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Verify Flutter toolchain
+      - name: Validate project files
         run: |
-          flutter --version
-          flutter doctor -v
+          set -e
+          test -f pubspec.yaml || { echo "Missing pubspec.yaml"; exit 1; }
+          test -f lib/main.dart || { echo "Missing lib/main.dart"; exit 1; }
+          echo "pubspec.yaml and lib/main.dart exist."
 
-      - name: Ensure full Android project
+      - name: Ensure Android project
         run: |
           if [ ! -d "android" ]; then
             flutter create .
@@ -42,7 +44,7 @@ jobs:
           echo "sdk.dir=/usr/local/android-sdk" > android/local.properties
           chmod +x android/gradlew
 
-      - name: Ensure minimal assets
+      - name: Ensure assets
         run: |
           mkdir -p assets/images
           [ -f assets/images/cat_default.png ] || curl -L https://placekitten.com/400/400 -o assets/images/cat_default.png
@@ -59,31 +61,25 @@ jobs:
           flutter clean
           flutter pub get
 
-      - name: Build APK release (split per ABI)
+      - name: Build APK release
         id: build_release
         continue-on-error: true
         run: |
-          flutter build apk --release -v \
-            --split-per-abi \
+          flutter build apk --release -v --split-per-abi \
             -Ptarget-platform=android-arm,android-arm64
 
-      - name: Fallback assembleRelease
-        if: steps.build_release.outcome == 'failure'
-        working-directory: android
-        continue-on-error: true
-        run: ./gradlew assembleRelease --stacktrace --info
-
-      - name: Build AAB release (optional)
+      - name: Build AAB release
         continue-on-error: true
         run: flutter build appbundle --release -v
 
-      - name: Debug artifact paths
+      - name: Debug outputs
         if: always()
         run: |
-          echo "=== SEARCH *.apk / *.aab ==="
+          echo "=== FIND APK/AAB ==="
           find build -type f \( -name "*.apk" -o -name "*.aab" \) -printf "%p\n" || true
-          echo "=== SHOW OUTPUT DIRS ==="
+          echo "=== build/app/outputs ==="
           ls -R build/app/outputs || true
+          echo "=== android/app/build/outputs ==="
           ls -R android/app/build/outputs || true
 
       - name: Collect artifacts
