@@ -5,9 +5,13 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  FLUTTER_VERSION: '3.24.3'   # ثبّت إصدارًا معروفًا
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,25 +22,24 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # 1) محاولة بإصدار مُثبّت
+      # محاولة أولى بإصدار مُثبّت
       - name: Setup Flutter (pinned)
         id: flutter_pinned
         continue-on-error: true
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '${{ env.FLUTTER_VERSION || '3.24.3' }}'
-          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
           cache: true
 
-      # 2) خطة بديلة إذا فشلت الخطوة السابقة
-      - name: Fallback to channel stable
+      # خطة بديلة إذا فشلت السابقة
+      - name: Fallback to stable channel
         if: steps.flutter_pinned.outcome == 'failure'
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: stable
           cache: true
 
-      # 3) طباعة الإصدار للتأكد
       - name: Verify Flutter version
         run: flutter --version
 
