@@ -189,6 +189,7 @@ jobs:
           find new_app -type f -name "*.apk" -printf "%p\n" || true
           echo "=== SHOW RELEASE DIRS ==="
           ls -R new_app/build/app/outputs || true
+          ls -R new_app/build/app/intermediates/apk/release || true
           ls -R new_app/android/app/build/outputs || true
 
       - name: Upload APK
@@ -199,6 +200,7 @@ jobs:
           path: |
             new_app/build/app/outputs/flutter-apk/*.apk
             new_app/build/app/outputs/apk/release/*.apk
+            new_app/build/app/intermediates/apk/release/*.apk
             new_app/android/app/build/outputs/apk/release/*.apk
             new_app/android/app/build/outputs/flutter-apk/*.apk
           if-no-files-found: warn
@@ -210,5 +212,6 @@ jobs:
           name: build-dump
           path: |
             new_app/build/app/outputs/**
+            new_app/build/app/intermediates/apk/release/**
             new_app/android/app/build/outputs/**
           if-no-files-found: warn
