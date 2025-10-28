@@ -182,14 +182,26 @@ jobs:
         continue-on-error: true
         run: ./gradlew assembleRelease --stacktrace --info
 
+      - name: Build APK (debug) final fallback
+        if: steps.build_release.outcome == 'failure'
+        working-directory: new_app
+        continue-on-error: true
+        run: flutter build apk --debug -v
+
+      - name: Gradle assembleDebug fallback
+        if: steps.build_release.outcome == 'failure'
+        working-directory: new_app/android
+        continue-on-error: true
+        run: ./gradlew assembleDebug --stacktrace --info
+
       - name: Debug APK paths before upload
         if: always()
         run: |
           echo "=== SEARCHING FOR APK FILES ==="
           find new_app -type f -name "*.apk" -printf "%p\n" || true
-          echo "=== SHOW RELEASE DIRS ==="
+          echo "=== SHOW OUTPUT DIRS ==="
           ls -R new_app/build/app/outputs || true
-          ls -R new_app/build/app/intermediates/apk/release || true
+          ls -R new_app/build/app/intermediates || true
           ls -R new_app/android/app/build/outputs || true
 
       - name: Upload APK
@@ -198,20 +210,6 @@ jobs:
         with:
           name: catbook-apk
           path: |
-            new_app/build/app/outputs/flutter-apk/*.apk
-            new_app/build/app/outputs/apk/release/*.apk
-            new_app/build/app/intermediates/apk/release/*.apk
-            new_app/android/app/build/outputs/apk/release/*.apk
-            new_app/android/app/build/outputs/flutter-apk/*.apk
-          if-no-files-found: warn
-
-      - name: Upload whole build for inspection
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-dump
-          path: |
-            new_app/build/app/outputs/**
-            new_app/build/app/intermediates/apk/release/**
-            new_app/android/app/build/outputs/**
+            new_app/**/outputs/**/*.apk
+            new_app/**/intermediates/**/*.apk
           if-no-files-found: warn
