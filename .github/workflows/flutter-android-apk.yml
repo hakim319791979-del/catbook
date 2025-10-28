@@ -124,6 +124,33 @@ jobs:
           distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip
           EOF
 
+      - name: Patch Android root build.gradle
+        run: |
+          cat > new_app/android/build.gradle <<'EOF'
+          buildscript {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath 'com.android.tools.build:gradle:8.3.0'
+                  classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22'
+              }
+          }
+
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+
+          rootProject.buildDir = '../build'
+          subprojects {
+              project.buildDir = "${rootProject.buildDir}/${project.name}"
+          }
+          EOF
+
       - name: Ensure Gradle wrapper is executable
         run: chmod +x new_app/android/gradlew
 
