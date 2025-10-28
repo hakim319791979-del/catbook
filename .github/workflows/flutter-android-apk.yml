@@ -45,6 +45,13 @@ jobs:
           cp -r lib/* new_app/lib/ || true
           cp pubspec.yaml new_app/ || true
 
+      - name: Fix Android build configuration
+        run: |
+          cd new_app/android
+          echo "sdk.dir=/usr/local/android-sdk" > local.properties
+          chmod +x gradlew
+          cd ../..
+
       - name: Add image assets
         run: |
           mkdir -p new_app/assets/images
