@@ -1,7 +1,7 @@
 name: catbook
-description: Simple Flutter app with NFT/QR placeholder for cats.
+description: Colorful Flutter UI with bottom navigation and NFT/QR screen.
 publish_to: "none"
-version: 0.2.0+2
+version: 0.3.0+3
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
