@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  FLUTTER_VERSION: '3.24.3'   # إصدار مثبت ومجرب
+  FLUTTER_VERSION: '3.24.3'
 
 jobs:
   build:
@@ -22,21 +22,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # محاولة أولى بإصدار Flutter مثبت
-      - name: Setup Flutter (pinned)
-        id: flutter_pinned
-        continue-on-error: true
+      - name: Setup Flutter
+        id: flutter_setup
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-
-      # خطة بديلة: قناة stable فقط
-      - name: Fallback to stable channel
-        if: steps.flutter_pinned.outcome == 'failure'
-        uses: subosito/flutter-action@v2
-        with:
           channel: stable
           cache: true
 
@@ -49,31 +39,21 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
-      # بناء الإصدار النهائي
+      # بناء APK إصدار نهائي
       - name: Build APK (release)
-        id: build_release
-        continue-on-error: true
         run: flutter build apk --release
 
-      # إذا فشل الإصدار النهائي، جرّب debug لضمان وجود مخرجات
-      - name: Build APK (debug fallback)
-        if: steps.build_release.outcome == 'failure'
-        run: flutter build apk --debug
-
-      # استكشاف المجلدات لتحديد المسارات الفعلية
+      # فحص جميع المجلدات لاكتشاف المسار الفعلي
       - name: List outputs
         run: |
-          echo "== Tree build/app/outputs =="
-          ls -R build/app/outputs || true
-          echo "== Find APKs =="
-          find build -type f -name "*.apk" -maxdepth 8 || true
+          echo "== List build output files =="
+          find build -type f -name "*.apk" -maxdepth 10
 
-      # رفع أي ملف APK موجود (release أو debug وأي flavor/ABI)
-      - name: Upload APK Artifact(s)
+      # رفع أي ملف APK أينما كان داخل build/
+      - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: apk-artifacts
+          name: app-apk-files
           path: |
-            build/app/outputs/flutter-apk/*.apk
-            build/app/outputs/**/**/*.apk
+            build/**/*.apk
           if-no-files-found: error
