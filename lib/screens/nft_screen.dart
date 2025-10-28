@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class NftScreen extends StatefulWidget {
   const NftScreen({super.key});
@@ -11,6 +13,7 @@ class NftScreen extends StatefulWidget {
 class _NftScreenState extends State<NftScreen> {
   final _catName = TextEditingController(text: 'Zubair');
   final _catId = TextEditingController(text: 'c1');
+  String _status = '';
 
   @override
   void dispose() {
@@ -19,13 +22,43 @@ class _NftScreenState extends State<NftScreen> {
     super.dispose();
   }
 
+  Future<void> _saveLocal() async {
+    final prefs = await SharedPreferences.getInstance();
+    final payload = {
+      "catId": _catId.text.trim(),
+      "catName": _catName.text.trim(),
+      "timestamp": DateTime.now().toIso8601String()
+    };
+    await prefs.setString('catNFT', jsonEncode(payload));
+    setState(() {
+      _status = 'Saved locally at ${DateTime.now().toLocal()}';
+    });
+  }
+
+  Future<void> _loadLocal() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString('catNFT');
+    if (data != null) {
+      final decoded = jsonDecode(data);
+      setState(() {
+        _catId.text = decoded['catId'];
+        _catName.text = decoded['catName'];
+        _status = 'Loaded locally';
+      });
+    } else {
+      setState(() {
+        _status = 'No saved data';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final payload = {
       "type": "cat_nft_placeholder",
       "catId": _catId.text.trim(),
       "catName": _catName.text.trim(),
-      "version": 1
+      "version": 2
     }.toString();
 
     return Scaffold(
@@ -88,15 +121,23 @@ class _NftScreenState extends State<NftScreen> {
             const SizedBox(height: 12),
             Text('Payload:\n$payload', style: const TextStyle(fontFamily: 'monospace')),
             const SizedBox(height: 20),
-            FilledButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Saved locally (placeholder). Connect to backend later.')),
-                );
-              },
-              icon: const Icon(Icons.save_alt),
-              label: const Text('Save placeholder'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                FilledButton.icon(
+                  onPressed: _saveLocal,
+                  icon: const Icon(Icons.save_alt),
+                  label: const Text('Save'),
+                ),
+                FilledButton.icon(
+                  onPressed: _loadLocal,
+                  icon: const Icon(Icons.download),
+                  label: const Text('Load'),
+                ),
+              ],
             ),
+            const SizedBox(height: 16),
+            Text(_status, style: const TextStyle(fontSize: 14, color: Colors.blueGrey)),
           ],
         ),
       ),
