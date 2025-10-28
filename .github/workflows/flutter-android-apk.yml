@@ -49,7 +49,6 @@ jobs:
         run: |
           mkdir -p new_app/assets/images
           curl -L https://placekitten.com/400/400 -o new_app/assets/images/cat_default.png
-          echo "Added cat_default.png"
 
       - name: Get dependencies
         working-directory: new_app
@@ -59,6 +58,12 @@ jobs:
         working-directory: new_app
         continue-on-error: true
         run: flutter analyze
+
+      - name: Clean project before build
+        working-directory: new_app
+        run: |
+          flutter clean
+          flutter pub get
 
       - name: Build APK (release)
         working-directory: new_app
