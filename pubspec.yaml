@@ -1,28 +1,17 @@
 name: catbook
-description: Local social app for cats with offline posts and colorful UI.
+description: Cat diary sharing app
 publish_to: "none"
-version: 0.4.0+4
 
 environment:
-  sdk: ">=3.3.0 <4.0.0"
+  sdk: ">=3.4.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.6
-  provider: ^6.1.2
-  qr_flutter: ^4.1.0
-  shared_preferences: ^2.3.2
-  google_fonts: ^6.2.1
-  image_picker: ^1.1.1
-  path_provider: ^2.1.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/images/
