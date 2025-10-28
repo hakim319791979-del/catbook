@@ -31,56 +31,15 @@ jobs:
       - name: Verify Flutter version
         run: flutter --version
 
-      - name: Clean project
-        run: flutter clean
-
+      # إنشاء مشروع Flutter نظيف
       - name: Create fresh Flutter project
         run: |
           rm -rf new_app
           flutter create -t app new_app
 
+      # نسخ كودك إلى المشروع الجديد
       - name: Replace Dart source
         run: |
           rm -rf new_app/lib
           mkdir -p new_app/lib
           cp -r lib/* new_app/lib/ || true
-          cp pubspec.yaml new_app/ || true
-
-      - name: Add default assets
-        run: |
-          mkdir -p new_app/assets/images
-          curl -L https://placekitten.com/300/300 -o new_app/assets/images/cat_default.png
-          if ! grep -q "assets:" new_app/pubspec.yaml; then
-            printf "\nflutter:\n  uses-material-design: true\n  assets:\n    - assets/images/\n" >> new_app/pubspec.yaml
-          fi
-
-      - name: Get dependencies
-        working-directory: new_app
-        run: flutter pub get
-
-      - name: Analyze (non-blocking)
-        working-directory: new_app
-        continue-on-error: true
-        run: flutter analyze
-
-      - name: Build APK (release)
-        working-directory: new_app
-        id: build_release
-        continue-on-error: true
-        run: flutter build apk --release
-
-      - name: Build APK (debug fallback)
-        if: steps.build_release.outcome == 'failure'
-        working-directory: new_app
-        run: flutter build apk --debug
-
-      - name: List APKs
-        working-directory: new_app
-        run: find build -type f -name "*.apk" -maxdepth 10
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: catbook-apk
-          path: new_app/build/**/*.apk
-          if-no-files-found: error
